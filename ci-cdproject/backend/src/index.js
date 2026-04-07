@@ -1,44 +1,61 @@
-const API = "http://backend:8080";
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import { db } from "./db.js";
 
-async function fetchTasks() {
-  try {
-    const res = await fetch(`${API}/tasks`);
-    const data = await res.json();
+dotenv.config();
 
-    const list = document.getElementById("taskList");
-    list.innerHTML = "";
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-    data.forEach(task => {
-      const li = document.createElement("li");
-      li.textContent = task.title;
-      list.appendChild(li);
-    });
+/* ---------------- HEALTH CHECK ---------------- */
+app.get("/", (req, res) => {
+  res.send("Backend running");
+});
 
-  } catch (err) {
-    console.error("Error fetching tasks:", err);
+/* ---------------- DB CONNECTION CHECK ---------------- */
+db.connect((err) => {
+  if (err) {
+    console.error("DB connection failed:", err);
+  } else {
+    console.log("Connected to MySQL");
   }
-}
+});
 
-async function addTask() {
-  const input = document.getElementById("taskInput");
+/* ---------------- GET TASKS ---------------- */
+app.get("/tasks", (req, res) => {
+  db.query("SELECT * FROM tasks", (err, data) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "DB error" });
+    }
+    return res.json(data);
+  });
+});
 
-  if (!input.value) return;
+/* ---------------- ADD TASK ---------------- */
+app.post("/tasks", (req, res) => {
+  const { title } = req.body;
 
-  try {
-    await fetch(`${API}/tasks`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ title: input.value })
-    });
-
-    input.value = "";
-    fetchTasks();
-
-  } catch (err) {
-    console.error("Error adding task:", err);
+  if (!title) {
+    return res.status(400).json({ error: "Title required" });
   }
-}
 
-fetchTasks();
+  const query = "INSERT INTO tasks (title) VALUES (?)";
+
+  db.query(query, [title], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Insert failed" });
+    }
+    return res.json({ message: "Task added" });
+  });
+});
+
+/* ---------------- START SERVER ---------------- */
+const PORT = 8080;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
