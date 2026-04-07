@@ -9,32 +9,23 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-/* ---------------- HEALTH CHECK ---------------- */
+/* -------- HEALTH CHECK -------- */
 app.get("/", (req, res) => {
-  res.send("Backend running");
+  res.send("Backend running 🚀");
 });
 
-/* ---------------- DB CONNECTION CHECK ---------------- */
-db.connect((err) => {
-  if (err) {
-    console.error("DB connection failed:", err);
-  } else {
-    console.log("Connected to MySQL");
-  }
-});
-
-/* ---------------- GET TASKS ---------------- */
+/* -------- GET TASKS -------- */
 app.get("/tasks", (req, res) => {
   db.query("SELECT * FROM tasks", (err, data) => {
     if (err) {
-      console.error(err);
+      console.error("DB error:", err);
       return res.status(500).json({ error: "DB error" });
     }
     return res.json(data);
   });
 });
 
-/* ---------------- ADD TASK ---------------- */
+/* -------- ADD TASK -------- */
 app.post("/tasks", (req, res) => {
   const { title } = req.body;
 
@@ -46,14 +37,14 @@ app.post("/tasks", (req, res) => {
 
   db.query(query, [title], (err, result) => {
     if (err) {
-      console.error(err);
+      console.error("Insert error:", err);
       return res.status(500).json({ error: "Insert failed" });
     }
     return res.json({ message: "Task added" });
   });
 });
 
-/* ---------------- START SERVER ---------------- */
+/* -------- START SERVER -------- */
 const PORT = 8080;
 
 app.listen(PORT, () => {
