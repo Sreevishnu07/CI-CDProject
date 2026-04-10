@@ -44,7 +44,7 @@ jobs:
           done
 
       - name: Initialize Database
-        run: mysql -h 127.0.0.1 -uroot -proot taskdb < ./mysql/init.sql
+        run: mysql -h 127.0.0.1 -uroot -proot taskdb < ./ci-cdproject/mysql/init.sql
 
       - name: Start Backend
         working-directory: ./ci-cdproject/backend
